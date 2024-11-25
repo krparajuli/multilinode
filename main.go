@@ -23,8 +23,11 @@ type LinodeAccount struct {
 }
 
 type PageData struct {
-	Accounts     []LinodeAccount
-	ErrorMessage string
+	Accounts      []LinodeAccount
+	ErrorMessage  string
+	TotalLinodes  int
+	TotalBilling  float64
+	TotalUnbilled float64
 }
 
 type BillingInfo struct {
@@ -144,6 +147,15 @@ func main() {
 				account := getAccountData(ctx, token, accountName)
 				data.Accounts = append(data.Accounts, account)
 			}
+		}
+
+		// Calculate totals after processing all accounts
+		for _, account := range data.Accounts {
+			data.TotalLinodes += len(account.Linodes)
+			if account.BillingInfo != nil {
+				data.TotalBilling += float64(account.BillingInfo.Total)
+			}
+			data.TotalUnbilled += account.AmountSinceLastInvoice
 		}
 
 		tmpl, err := template.ParseFiles("templates/index.html")

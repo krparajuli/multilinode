@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Linode Multi-Account Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-light: #ebf5fb;
+            --secondary-color: #2980b9;
+            --text-color: #2c3e50;
+            --border-color: #e1e8ed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            background-color: #f8fafb;
+        }
+
+        .navbar {
+            background-color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar h1 {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1px;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: white;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .tab:hover {
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .account {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .account.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .billing-card {
+            background: var(--primary-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .billing-card h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            background: var(--primary-light);
+            color: var(--primary-color);
+        }
+
+        .ip-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0;
+        }
+
+        .ip-list li {
+            padding: 0.5rem;
+            background: #f8fafb;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            margin: 0 0 1rem 0;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>Linode Multi-Account Dashboard</h1>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            {{range $index, $account := .Accounts}}
+            <button class="tab {{if eq $index 0}}active{{end}}" 
+                    data-account-index="{{$index}}">
+                {{.Name}}
+            </button>
+            {{end}}
+        </div>
+
+        {{range $index, $account := .Accounts}}
+        <div class="account {{if eq $index 0}}active{{end}}" id="account-{{$index}}">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value">{{len .Linodes}}</div>
+                    <div class="stat-label">Total Linodes</div>
+                </div>
+                {{if .BillingInfo}}
+                <div class="stat-card">
+                    <div class="stat-value">${{.BillingInfo.Total}}</div>
+                    <div class="stat-label">Latest Invoice</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${{.AmountSinceLastInvoice}}</div>
+                    <div class="stat-label">Amount Since Last Invoice</div>
+                </div>
+                {{end}}
+            </div>
+
+            {{if .BillingInfo}}
+            <div class="billing-card">
+                <h2>Billing Information</h2>
+                <p>Invoice Date: {{.BillingInfo.Date}}</p>
+                <p>Total: ${{.BillingInfo.Total}}</p>
+            </div>
+            {{end}}
+
+            <div class="dashboard-grid">
+                {{range .Linodes}}
+                <div class="card">
+                    <h3>{{.Label}}</h3>
+                    <p><span class="status-badge">{{.Status}}</span></p>
+                    <p>Region: {{.Region}}</p>
+                    <p>Type: {{.Type}}</p>
+                    <h4>IP Addresses:</h4>
+                    <ul class="ip-list">
+                        IPs: 
+                        {{range .IPv4}}
+                            <li>{{.}}</li>
+                        {{end}}
+                    </ul>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+    </div>
+
+    <script>
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                showAccount(parseInt(tab.dataset.accountIndex));
+            });
+        });
+
+        function showAccount(index) {
+            // Hide all accounts
+            document.querySelectorAll('.account').forEach(account => {
+                account.classList.remove('active');
+            });
+            
+            // Deactivate all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected account and activate tab
+            document.getElementById(`account-${index}`).classList.add('active');
+            document.querySelectorAll('.tab')[index].classList.add('active');
+        }
+    </script>
+</body>
+</html> 
